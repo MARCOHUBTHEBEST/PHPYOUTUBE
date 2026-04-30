@@ -1,0 +1,5 @@
+/vendor
+.env
+*.mp4
+*.webm
+*.mkv
