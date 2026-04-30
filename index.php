@@ -20,18 +20,31 @@ return json_decode($res);
 }
 
 $update = json_decode(file_get_contents('php://input'));
-$message = $update->message;
-$id = $message->from->id;
-$rep = $message->message_id ;
-$m = $rep + 1 ;
-$chat_id = $message->chat->id;
-$from_id = $message->from->id;
+
+/* ================= SAFE FIX ================= */
+if(!$update || (!isset($update->message) && !isset($update->callback_query))){
+exit;
+}
+/* =========================================== */
+
+$message = $update->message ?? null;
+
+$id = $message->from->id ?? null;
+$rep = $message->message_id ?? null;
+$m = $rep + 1;
+
+$chat_id = $message->chat->id ?? null;
+$from_id = $message->from->id ?? null;
+
 $admin = "5057151278";
-$text = $message->text;
-$namee = $update->callback_query->from->first_name;
-$user = $message->from->username;
+$text = $message->text ?? null;
+
+$namee = $update->callback_query->from->first_name ?? null;
+$user = $message->from->username ?? null;
 
 if(isset($update->callback_query)){
+if(!isset($update->callback_query->message)) exit;
+
 $chat_id = $update->callback_query->message->chat->id;
 $message_id = $update->callback_query->message->message_id;
 $data = $update->callback_query->data;
@@ -47,13 +60,17 @@ bot('forwardMessage',[
 ]);
 }
 
+if(!isset($chat_id) || empty($chat_id)){
+exit;
+}
+
 $base = file_get_contents("$chat_id");
 
 if($text == "/start" && $base == ''){
 bot('sendmessage',[
 'chat_id'=>$chat_id,
 'text'=>"اختر كيف تريد استخدام تحميل اليوتيوب",
-'reply_to_message_id'=>$update->message->message_id,
+'reply_to_message_id'=>$message->message_id ?? null,
 'parse_mode'=>"MARKDOWN",
 'reply_markup'=>json_encode([
 'inline_keyboard'=>[
@@ -95,7 +112,6 @@ $xx = "http://api.medooo.ml/leomedo/yt?url=$text&token=$token&chat_id=$chat_id&m
 
 $ch = curl_init($xx);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch, CURLOPT_HEADER, 0);
 $data = curl_exec($ch);
 curl_close($ch);
 
@@ -119,7 +135,6 @@ $ytt = "http://api.medooo.ml/leomedo/yt?url=$text&token=$token&chat_id=$chat_id&
 
 $ch = curl_init($ytt);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch, CURLOPT_HEADER, 0);
 $data = curl_exec($ch);
 curl_close($ch);
 
@@ -139,7 +154,6 @@ $ytt = "https://api.medooo.ml/leomedo/voiceRecognise?token=$token&chat_id=$chat_
 
 $ch = curl_init($ytt);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch, CURLOPT_HEADER, 0);
 $data = curl_exec($ch);
 curl_close($ch);
 }
