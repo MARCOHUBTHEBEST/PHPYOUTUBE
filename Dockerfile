@@ -1,6 +1,6 @@
 FROM php:8.2-cli
 
-# 1. تثبيت التحديثات والأدوات الأساسية
+# تثبيت الأدوات الأساسية
 RUN apt-get update && apt-get install -y \
     ffmpeg \
     curl \
@@ -8,25 +8,22 @@ RUN apt-get update && apt-get install -y \
     unzip \
     && rm -rf /var/lib/apt/lists/*
 
-# 2. تثبيت Composer
+# تثبيت Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# 3. تثبيت أداة yt-dlp
+# تثبيت yt-dlp
 RUN curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp \
     && chmod a+rx /usr/local/bin/yt-dlp
 
-# 4. ضبط مسار العمل ونسخ الملفات
 WORKDIR /var/www/html
 COPY . .
 
-# 5. تثبيت مكتبات PHP
+# تثبيت المكتبات
 RUN composer install --no-dev --optimize-autoloader
 
-# 6. إعطاء صلاحيات للمجلد
+# إعطاء صلاحيات كاملة للمجلد لضمان كتابة الفيديوهات
 RUN chmod -R 777 /var/www/html
 
-# تفعيل المنفذ الذي يطلبه Railway
-EXPOSE 80
-
-# تشغيل سيرفر PHP المدمج مباشرة على المنفذ 80
-CMD ["php", "-S", "0.0.0.0:80", "bot.php"]
+# Railway يعطينا منفذ متغير عبر متغير البيئة $PORT
+# سنقوم بتشغيل السيرفر عليه
+CMD php -S 0.0.0.0:${PORT:-80} bot.php
